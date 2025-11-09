@@ -27,9 +27,11 @@ const groupByStatus = {};
 
 roomStatus.map(status => {
   if (!groupByStatus[status]) {
-    return (groupByStatus[status] = 1);
+     groupByStatus[status] = 1;
   }
-  return (groupByStatus[status] += 1);
+  else {
+    groupByStatus[status] += 1
+  }
 });
 
 console.log(groupByStatus);
