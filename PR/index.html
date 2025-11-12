@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Weather App</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configure Tailwind for Inter font and custom colors -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'sky-blue': '#0070F3',
+                        'light-gray': '#F7F7F7',
+                        'dark-text': '#1F2937',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Load Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for background and centering */
+        body {
+            background-color: #E5E7EB; /* Light grey background */
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align content slightly higher */
+            padding-top: 4rem;
+        }
+
+        /* Styling for the main weather card */
+        .weather-card {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Simple button hover animation */
+        .search-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="font-sans">
+
+    <!-- Main Container -->
+    <div class="w-full max-w-lg p-4 sm:p-6 lg:p-8">
+
+        <!-- Weather Card -->
+        <div id="weatherCard" class="weather-card bg-white rounded-2xl p-6 md:p-8 lg:p-10 transition-all duration-300">
+
+            <h1 class="text-3xl font-bold text-dark-text mb-6 text-center">Global Weather Forecast</h1>
+
+            <!-- Search Input Section -->
+            <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mb-8">
+                <input
+                    type="text"
+                    id="cityInput"
+                    placeholder="Enter city name (e.g., London)"
+                    class="flex-grow p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-blue"
+                >
+                <button
+                    id="searchButton"
+                    class="search-button bg-sky-blue text-white font-semibold py-3 px-6 rounded-xl transition duration-200 ease-in-out shadow-lg hover:bg-blue-600 active:bg-blue-700"
+                >
+                    Search
+                </button>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loading" class="hidden text-center text-gray-500 py-6">
+                <svg class="animate-spin h-5 w-5 mr-3 inline-block text-sky-blue" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Fetching weather data...
+            </div>
+
+            <!-- Error Message Display -->
+            <div id="error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <strong class="font-bold">Error!</strong>
+                <span class="block sm:inline" id="errorMessage"></span>
+            </div>
+
+            <!-- Weather Results Display (Hidden by default) -->
+            <div id="weatherResults" class="hidden text-center transition-opacity duration-500">
+                
+                <!-- Weather Icon and Temperature -->
+                <div class="flex justify-center items-center my-6">
+                    <span id="weatherIcon" class="text-7xl mr-4" role="img" aria-label="Weather Icon">☀️</span>
+                    <div class="text-8xl font-light text-dark-text">
+                        <span id="temperature">24</span>
+                        <span class="text-5xl align-top">&deg;C</span>
+                    </div>
+                </div>
+
+                <!-- City and Description -->
+                <p id="cityDisplay" class="text-3xl font-semibold text-dark-text">New York, US</p>
+                <p id="description" class="text-xl text-gray-500 mt-2 capitalize">Clear Sky</p>
+
+                <!-- Details Grid -->
+                <div class="grid grid-cols-2 gap-4 mt-8 pt-4 border-t border-gray-100">
+                    
+                    <div class="text-left p-3 bg-light-gray rounded-xl">
+                        <p class="text-sm font-medium text-gray-500">Humidity</p>
+                        <p id="humidity" class="text-xl font-bold text-dark-text">65%</p>
+                    </div>
+                    
+                    <div class="text-left p-3 bg-light-gray rounded-xl">
+                        <p class="text-sm font-medium text-gray-500">Wind Speed</p>
+                        <p id="windSpeed" class="text-xl font-bold text-dark-text">10 km/h</p>
+                    </div>
+
+                    <div class="text-left p-3 bg-light-gray rounded-xl">
+                        <p class="text-sm font-medium text-gray-500">Min Temp</p>
+                        <p id="minTemp" class="text-xl font-bold text-dark-text">20&deg;C</p>
+                    </div>
+
+                    <div class="text-left p-3 bg-light-gray rounded-xl">
+                        <p class="text-sm font-medium text-gray-500">Max Temp</p>
+                        <p id="maxTemp" class="text-xl font-bold text-dark-text">28&deg;C</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Initial Prompt Message -->
+            <div id="initialPrompt" class="text-center text-gray-400 py-10 transition-opacity duration-500">
+                <span class="text-4xl block mb-2">🌍</span>
+                <p class="text-lg">Search for a city to see the current weather!</p>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const cityInput = document.getElementById('cityInput');
+        const searchButton = document.getElementById('searchButton');
+        const loadingIndicator = document.getElementById('loading');
+        const errorDiv = document.getElementById('error');
+        const errorMessageSpan = document.getElementById('errorMessage');
+        const weatherResultsDiv = document.getElementById('weatherResults');
+        const initialPromptDiv = document.getElementById('initialPrompt');
+
+        // Weather display elements
+        const temperatureEl = document.getElementById('temperature');
+        const cityDisplayEl = document.getElementById('cityDisplay');
+        const descriptionEl = document.getElementById('description');
+        const humidityEl = document.getElementById('humidity');
+        const windSpeedEl = document.getElementById('windSpeed');
+        const minTempEl = document.getElementById('minTemp');
+        const maxTempEl = document.getElementById('maxTemp');
+        const weatherIconEl = document.getElementById('weatherIcon');
+
+        // --- Mock Data and API Function ---
+
+        /**
+         * Maps weather conditions to appropriate Emojis.
+         * In a real app, you would map OpenWeatherMap icon codes to these.
+         */
+        function getWeatherIcon(condition) {
+            condition = condition.toLowerCase();
+            if (condition.includes('cloud')) return '☁️';
+            if (condition.includes('rain')) return '🌧️';
+            if (condition.includes('snow')) return '❄️';
+            if (condition.includes('clear')) return '☀️';
+            if (condition.includes('storm') || condition.includes('thunder')) return '⛈️';
+            if (condition.includes('mist') || condition.includes('fog')) return '🌫️';
+            return '❓'; // Default icon
+        }
+
+        /**
+         * IMPORTANT: This is a MOCK function simulating an API call.
+         * * To use a REAL API (e.g., OpenWeatherMap), replace the contents of this 
+         * function with a proper 'fetch' call using your own API key.
+         * * Real API structure (requires API_KEY):
+         * const API_KEY = "YOUR_API_KEY_HERE";
+         * const API_URL = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`;
+         * const response = await fetch(API_URL);
+         * const data = await response.json();
+         * return data;
+         */
+        async function getWeatherData(city) {
+            console.log(`Simulating fetching data for: ${city}`);
+            
+            // Show loading state
+            initialPromptDiv.classList.add('hidden');
+            weatherResultsDiv.classList.add('hidden');
+            errorDiv.classList.add('hidden');
+            loadingIndicator.classList.remove('hidden');
+
+            // Simulate network delay
+            await new Promise(resolve => setTimeout(resolve, 1500)); 
+
+            // Hardcoded mock data based on city input
+            const mockData = {
+                'london': { temp: 15, desc: 'Partly Cloudy', humidity: 75, wind: 12, min: 10, max: 18, name: 'London', country: 'GB' },
+                'tokyo': { temp: 22, desc: 'Clear Sky', humidity: 55, wind: 8, min: 18, max: 25, name: 'Tokyo', country: 'JP' },
+                'paris': { temp: 18, desc: 'Light Rain', humidity: 80, wind: 5, min: 15, max: 20, name: 'Paris', country: 'FR' },
+            };
+
+            const cityKey = city.toLowerCase().trim();
+            
+            loadingIndicator.classList.add('hidden'); // Hide loading state
+
+            if (mockData[cityKey]) {
+                return { 
+                    cod: 200, // Simulate success
+                    main: {
+                        temp: mockData[cityKey].temp,
+                        humidity: mockData[cityKey].humidity,
+                        temp_min: mockData[cityKey].min,
+                        temp_max: mockData[cityKey].max,
+                    },
+                    weather: [{ description: mockData[cityKey].desc }],
+                    wind: { speed: mockData[cityKey].wind / 3.6 }, // Convert km/h to m/s (OpenWeather default)
+                    name: mockData[cityKey].name,
+                    sys: { country: mockData[cityKey].country }
+                };
+            } else if (cityKey === 'error') {
+                // Simulate an API error (e.g., rate limit)
+                return { cod: 500, message: 'Internal server error: API rate limit exceeded.' };
+            } else {
+                // Simulate 404 Not Found error
+                return { cod: 404, message: 'city not found' };
+            }
+        }
+
+        // --- Event Handlers and Logic ---
+
+        async function fetchWeather() {
+            const city = cityInput.value.trim();
+            if (city === "") {
+                displayError("Please enter a city name.");
+                return;
+            }
+
+            try {
+                // 1. Fetch data (uses mock function)
+                const data = await getWeatherData(city);
+
+                // 2. Check for API errors (e.g., 404, 500)
+                if (data.cod !== 200 && data.cod !== '200') {
+                    // Handle specific errors
+                    const msg = data.message ? data.message.charAt(0).toUpperCase() + data.message.slice(1) : 'Could not retrieve weather data.';
+                    displayError(`${msg}. Please try another city.`);
+                    return;
+                }
+
+                // 3. Update the UI
+                updateWeatherDisplay(data);
+
+            } catch (error) {
+                console.error("Error fetching or processing weather data:", error);
+                displayError("Failed to connect to the weather service. Check your connection.");
+            }
+        }
+
+        function updateWeatherDisplay(data) {
+            // Hide error and initial prompt
+            errorDiv.classList.add('hidden');
+            initialPromptDiv.classList.add('hidden');
+            
+            // Set values
+            const tempC = Math.round(data.main.temp);
+            const minTempC = Math.round(data.main.temp_min);
+            const maxTempC = Math.round(data.main.temp_max);
+            const windKmH = (data.wind.speed * 3.6).toFixed(1); // Convert m/s (API default) to km/h
+
+            temperatureEl.textContent = tempC;
+            cityDisplayEl.textContent = `${data.name}, ${data.sys.country}`;
+            descriptionEl.textContent = data.weather[0].description;
+            humidityEl.textContent = `${data.main.humidity}%`;
+            windSpeedEl.textContent = `${windKmH} km/h`;
+            minTempEl.textContent = `${minTempC}°C`;
+            maxTempEl.textContent = `${maxTempC}°C`;
+            weatherIconEl.textContent = getWeatherIcon(data.weather[0].description);
+
+            // Show results
+            weatherResultsDiv.classList.remove('hidden');
+        }
+
+        function displayError(message) {
+            // Hide results and initial prompt
+            weatherResultsDiv.classList.add('hidden');
+            initialPromptDiv.classList.add('hidden');
+
+            // Display error
+            errorMessageSpan.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+
+        // --- Setup Event Listeners ---
+        searchButton.addEventListener('click', fetchWeather);
+        
+        cityInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                fetchWeather();
+            }
+        });
+
+        // Load some initial mock data to show the layout immediately
+        window.onload = () => {
+             // Simulate initial data load for a good first impression
+             updateWeatherDisplay({
+                cod: 200,
+                main: { temp: 24.3, humidity: 65, temp_min: 20.1, temp_max: 28.9 },
+                weather: [{ description: 'Clear Sky' }],
+                wind: { speed: 2.7 }, // ~10 km/h
+                name: 'New York',
+                sys: { country: 'US' }
+             });
+        };
+        
+    </script>
+</body>
+</html>
